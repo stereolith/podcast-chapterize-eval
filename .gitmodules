@@ -1,0 +1,3 @@
+[submodule "podcast-chapterize"]
+	path = podcast-chapterize
+	url = git@github.com:stereolith/podcast-chapterize.git
