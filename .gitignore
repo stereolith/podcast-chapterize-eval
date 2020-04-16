@@ -2,3 +2,4 @@ transcripts/*.json
 transcripts/done
 transcripts/transcribe
 backup/
+cc.*
