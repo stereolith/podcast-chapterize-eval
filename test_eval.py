@@ -1,11 +1,11 @@
 import pytest, sys, inspect
-sys.path.append('./podcast-chapterize')
+sys.path.append('./podcast_chapterize')
 
 def test_transcript_parse():
     from eval_chapterization import get_transcripts
     import importlib  
 
-    from transcribe.SpeechToTextModules.SpeechToTextModule import TranscriptToken
+    from podcast_chapterize.transcribe.SpeechToTextModules.SpeechToTextModule import TranscriptToken
     transcripts = get_transcripts()
 
     assert len(transcripts) > 1

@@ -1,11 +1,11 @@
 # script to automatically evaluate different sets of parameters in the chapterization process
 
-import os, fasttext, fasttext.util, segeval
+import os, sys, fasttext, fasttext.util, segeval
+sys.path.append('./podcast_chapterize')
 
 # change sys path to allow realtive imports of podcast-chapterize modules
 import sys
-sys.path.append('./podcast-chapterize')
-from chapterize.preprocessor_helper import lemma
+from podcast_chapterize.chapterize.preprocessor_helper import lemma
 
 def eval():
 
@@ -48,7 +48,7 @@ def get_transcripts():
     """    
 
     import glob, os, json
-    from transcribe.SpeechToTextModules.SpeechToTextModule import TranscriptToken
+    from podcast_chapterize.transcribe.SpeechToTextModules.SpeechToTextModule import TranscriptToken
 
     transcripts = []
     for file in glob.glob("transcripts/*.json"):
@@ -151,7 +151,7 @@ def run_chapterization(transcript, params, ft_en, ft_de):
         [list of int]: identified boundaries (positon as token count)
     """   
 
-    from chapterize.chapterizer import Chapterizer
+    from podcast_chapterize.chapterize.chapterizer import Chapterizer
 
     c = Chapterizer(
         window_width=params.window_width,
