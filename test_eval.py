@@ -21,12 +21,12 @@ def test_parameter_matrix():
         assert isinstance(parameter_vector, ChapterizerParameter)
 
 def test_eval_segmentations():
-    sample_segmentation = [200, 1200, 2000, 3000, 5400, 6200, 7400, 8200, 9200, 10000, 10800, 12200, 13200, 13800, 16000, 18400, 20000, 21200, 22400, 23200]
-    sample_segmentation_gold = [1, 76, 922, 1751, 2357, 3230, 3950, 4991, 6504, 9202, 10070, 14356, 16236, 21929, 22560, 24404]
+    # test data: 1 exact match, 3 near matches (less than 100 tokens apart), rest is not matched
+    sample_segmentation = [200, 1200, 2000, 3000, 5400, 6200, 7400, 8200, 9200, 10060, 10800, 12200, 13200, 13800, 16000, 18400, 20000, 21200, 22400, 23200]
+    sample_segmentation_gold = [1, 76, 922, 1751, 2950, 3230, 3950, 4991, 6504, 9202, 10070, 13200, 16236, 21929, 22560, 24404]
     sample_doc_length = 24800
 
     from eval_chapterization import eval_segmentation
 
     score = eval_segmentation(sample_segmentation, sample_segmentation_gold, sample_doc_length)
-
-    assert isinstance(score, float)
+    assert score > 0
