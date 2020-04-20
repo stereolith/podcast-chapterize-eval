@@ -3,7 +3,7 @@
 import os, sys, json, fasttext, fasttext.util, segeval
 sys.path.append('./podcast_chapterize')
 
-# no stdout context
+# context to silence stdout
 import contextlib
 import sys
 
@@ -17,22 +17,27 @@ def nostdout():
     yield
     sys.stdout = save_stdout
 
+# load ft models once globally to prevent need for loading the models multiple times
+model_path = fasttext.util.download_model('en', if_exists='ignore')
+ft_en = fasttext.load_model(model_path)
+
+model_path = fasttext.util.download_model('de', if_exists='ignore')
+#ft_de = fasttext.load_model(model_path)
+ft_de = None
+
 # change sys path to allow realtive imports of podcast-chapterize modules
 import sys
 from podcast_chapterize.chapterize.preprocessor_helper import lemma
 
+
 def eval():
+    from multiprocessing import Pool
+    from functools import partial
+
     transcripts = get_transcripts()
 
     param_matrix = parameter_matrix()
 
-    # load ft models once globally to prevent need for loading the models multiple times
-    model_path = fasttext.util.download_model('en', if_exists='ignore')
-    ft_en = fasttext.load_model(model_path)
-
-    model_path = fasttext.util.download_model('de', if_exists='ignore')
-    #ft_de = fasttext.load_model(model_path)
-    ft_de = None
 
     eval_score_matrix = [[] for i, x in enumerate(param_matrix)] # transcript scores by parameter set
 
@@ -40,28 +45,36 @@ def eval():
         
         if transcript['language'] == 'en':
             true_chapter_boundaries = get_true_chapter_boundaries(transcript)
-
             print('gold chapter boundaries: ', true_chapter_boundaries)
 
             # bulk lemmatize to prevent redundancy 
             transcript['tokens'] = lemmatize(transcript['tokens'], transcript['language'])
 
-            for j, params in enumerate(param_matrix):
-                print(f'test transcript {i}/{len(transcripts)} with parameters {j}/{len(param_matrix)}')
-                with nostdout():
-                    boundaries = run_chapterization(transcript, params, ft_en, ft_de)
+            # use multiprocesses to distribute over multiple cores
+            pool = Pool()
+            get_score_for_current_transcript = partial(get_score, transcript=transcript, true_chapter_boundaries=true_chapter_boundaries, i_transcript=i, len_transcripts=len(transcripts), len_params=len(param_matrix))
+            scores = pool.map(get_score_for_current_transcript, enumerate(param_matrix))
+            print(scores)
 
-                score = eval_segmentation(boundaries, true_chapter_boundaries, len(transcript['tokens']))
-                print(f'segmentation similarity: {score}')
+            for j, score in enumerate(scores):
                 eval_score_matrix[j].append(score)
-    
+
     with open('results.json', 'w') as f:
         j = {
             'parameter_matrix': [param.to_dict() for param in param_matrix],
             'results': eval_score_matrix
         }
-        json.dump(eval_score_matrix, f)
-            
+        json.dump(j, f)
+    
+
+def get_score(params_tuple, transcript, true_chapter_boundaries, i_transcript, len_transcripts, len_params):
+    params = params_tuple[1]
+    i_params = params_tuple[0]
+    print(f'test transcript {i_transcript}/{len_transcripts} with parameters {i_params}/{len_params}')
+    with nostdout():
+        boundaries = run_chapterization(transcript, params, ft_en, ft_de)
+        score = eval_segmentation(boundaries, true_chapter_boundaries, len(transcript['tokens']))
+    return score
 
 
 def get_transcripts():
@@ -78,8 +91,13 @@ def get_transcripts():
     for file in glob.glob("transcripts/*.json"):
         with open(file) as f:           
             transcript = json.load(f)
+        try:
+            l = transcript['language']
+            c = transcript['chapters']
             transcript['tokens'] = [TranscriptToken.from_dict(token) for token in transcript['tokens']]
             transcripts.append(transcript)
+        except:
+            print(f'skipping transcript {file} because it is missing language and/or chapter values')
 
     print(f'fetched {len(transcripts)} transcripts')
 
@@ -146,12 +164,12 @@ def parameter_matrix():
     """
 
     # values to test
-    window_width = [50, 100, 150, 200, 250, 300]
+    window_width = [50, 100, 200, 300]
     with_boundaries = [0]
     tfidf_min_df = [0, 5]
-    tfidf_max_df = [0.6, 0.7, 0.8, 0.9]
+    tfidf_max_df = [0.7, 0.8, 0.9]
     savgol_window_length = [0]
-    savgol_polyorder = [3, 4, 5]
+    savgol_polyorder = [4, 5]
     doc_vectorizer = ['tfidf', 'ft_sif_average', 'ft_average', 'ft_sum']
 
     import itertools
@@ -226,8 +244,6 @@ def eval_segmentation(segmentation, gold_segmentation, doc_length):
     bed = segeval.boundary_edit_distance(boundary_string_seg, boundary_string_gold, n_t=100)
 
     b = segeval.boundary_similarity(boundary_string_seg, boundary_string_gold, boundary_format=segeval.BoundaryFormat.sets)
-
-    print(b)
 
     return b
 
