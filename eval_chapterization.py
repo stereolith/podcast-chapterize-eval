@@ -18,12 +18,14 @@ def eval():
     ft_en = fasttext.load_model(model_path)
 
     model_path = fasttext.util.download_model('de', if_exists='ignore')
-    ft_de = fasttext.load_model(model_path) 
+    ft_de = fasttext.load_model(model_path)
 
     eval_score_matrix = [[] for i, x in enumerate(param_matrix)] # transcript scores by parameter set
 
     for i, transcript in enumerate(transcripts):
         true_chapter_boundaries = get_true_chapter_boundaries(transcript)
+
+        print('gold chapter boundaries: ', true_chapter_boundaries)
 
         # bulk lemmatize to prevent redundancy 
         transcript['tokens'] = lemmatize(transcript['tokens'], transcript['language'])
@@ -39,7 +41,10 @@ def eval():
 
 
 def get_transcripts():
-    """fetch transcripts from json files and convert tokens to TranscriptToken objects
+    """fetch transcripts from json files in transcripts/ folder and convert tokens to TranscriptToken objects
+
+    Returns:
+        list: transcripts
     """    
 
     import glob, os, json
@@ -223,6 +228,3 @@ def set_lang(match, language):
             j['language'] = language
             with open(file, 'w') as f:
                 json.dump(j, f)
-
-
-eval()
