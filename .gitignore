@@ -1,4 +1,5 @@
 transcripts/*.json
+transcripts.pickle
 transcripts/done
 transcripts/transcribe
 backup/

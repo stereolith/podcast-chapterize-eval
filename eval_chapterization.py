@@ -17,54 +17,45 @@ def nostdout():
     yield
     sys.stdout = save_stdout
 
-# load ft models once globally to prevent need for loading the models multiple times
-model_path = fasttext.util.download_model('en', if_exists='ignore')
-ft_en = fasttext.load_model(model_path)
-
-model_path = fasttext.util.download_model('de', if_exists='ignore')
-#ft_de = fasttext.load_model(model_path)
-ft_de = None
-
 # change sys path to allow realtive imports of podcast-chapterize modules
 import sys
 from podcast_chapterize.chapterize.preprocessor_helper import lemma
 
 
-def eval():
-    from multiprocessing import Pool
-    from functools import partial
-
+def main():
     transcripts = get_transcripts()
 
     param_matrix = parameter_matrix()
 
+    score_matrix = run_evaluation(transcripts, param_matrix)
+
+    results_dict = {
+        'parameter_matrix': [param.to_dict() for param in param_matrix],
+        'results': eval_score_matrix
+    }
+
+    with open('results.json', 'w') as f:
+        json.dump(results_dict, f)
+
+
+def run_evaluation(transcripts, param_matrix):
+    from multiprocessing import Pool
+    from functools import partial
 
     eval_score_matrix = [[] for i, x in enumerate(param_matrix)] # transcript scores by parameter set
 
     for i, transcript in enumerate(transcripts):
-        
-        if transcript['language'] == 'en':
-            true_chapter_boundaries = get_true_chapter_boundaries(transcript)
-            print('gold chapter boundaries: ', true_chapter_boundaries)
+        # use multiprocesses to distribute over multiple cores
+        pool = Pool(processes=3,maxtasksperchild=10)
+        get_score_for_current_transcript = partial(get_score, transcript=transcript, true_chapter_boundaries=transcript['trueChapterBoundaries'], i_transcript=i, len_transcripts=len(transcripts), len_params=len(param_matrix))
+        scores = pool.map(get_score_for_current_transcript, enumerate(param_matrix))
+        print(scores)
 
-            # bulk lemmatize to prevent redundancy 
-            transcript['tokens'] = lemmatize(transcript['tokens'], transcript['language'])
+        for j, score in enumerate(scores):
+            eval_score_matrix[j].append(score)
 
-            # use multiprocesses to distribute over multiple cores
-            pool = Pool()
-            get_score_for_current_transcript = partial(get_score, transcript=transcript, true_chapter_boundaries=true_chapter_boundaries, i_transcript=i, len_transcripts=len(transcripts), len_params=len(param_matrix))
-            scores = pool.map(get_score_for_current_transcript, enumerate(param_matrix))
-            print(scores)
+    return eval_score_matrix
 
-            for j, score in enumerate(scores):
-                eval_score_matrix[j].append(score)
-
-    with open('results.json', 'w') as f:
-        j = {
-            'parameter_matrix': [param.to_dict() for param in param_matrix],
-            'results': eval_score_matrix
-        }
-        json.dump(j, f)
     
 
 def get_score(params_tuple, transcript, true_chapter_boundaries, i_transcript, len_transcripts, len_params):
@@ -72,12 +63,21 @@ def get_score(params_tuple, transcript, true_chapter_boundaries, i_transcript, l
     i_params = params_tuple[0]
     print(f'test transcript {i_transcript}/{len_transcripts} with parameters {i_params}/{len_params}')
     with nostdout():
-        boundaries = run_chapterization(transcript, params, ft_en, ft_de)
+        boundaries = run_chapterization(transcript, params)
         score = eval_segmentation(boundaries, true_chapter_boundaries, len(transcript['tokens']))
     return score
 
 
 def get_transcripts():
+    """get pickeled transcripts that were prepared by the prepare_transcripts function
+
+    Returns:
+        list: list of transcripts
+    """
+    import pickle
+    return pickle.load(open('transcripts/transcripts.pickle', 'rb'))
+
+def parse_transcripts_json():
     """fetch transcripts from json files in transcripts/ folder and convert tokens to TranscriptToken objects
 
     Returns:
@@ -187,13 +187,8 @@ def parameter_matrix():
 
     return param_objects
 
-def lemmatize(tokens, language):
-    chunk_tokens_lemma = lemma([token.token for token in tokens], language)
-    for i, token in enumerate(tokens):
-        token.token = chunk_tokens_lemma[i]
-    return tokens
 
-def run_chapterization(transcript, params, ft_en, ft_de):
+def run_chapterization(transcript, params):
     """run chapterization with the given parameters
     
     Args:
@@ -217,8 +212,6 @@ def run_chapterization(transcript, params, ft_en, ft_de):
 
     concat_chapters, boundaries = c.chapterize(
         transcript['tokens'],
-        ft_en,
-        ft_de,
         boundaries=[],
         language=transcript['language'],
         skip_lemmatization=True
@@ -273,8 +266,7 @@ def boundary_string_from_boundary_indices(segmentation, doc_length):
 
     return segeval.boundary_string_from_masses(tuple(masses))
 
-
-# helper functions for language value in transcript json files
+# helper functions
 def set_lang(match, language):
     import glob, os, json
     for file in glob.glob("transcripts/*.json"):
@@ -295,3 +287,50 @@ def check_lang():
             l = j['language']
         except KeyError:
             print(f'no language set for file {file}')
+
+def prepare_transcripts():
+    import pickle
+
+    transcripts = parse_transcripts_json()
+    transcripts = bulk_lemmatize(transcripts)
+    transcripts = bulk_fasttext(transcripts)
+
+    for transcript in transcripts:
+        transcript['trueChapterBoundaries'] = get_true_chapter_boundaries(transcript)
+
+    pickle.dump(transcripts, open('transcripts/transcripts.pickle', 'wb'))
+
+
+def bulk_fasttext(transcripts):
+    """parses transcripts from json files, bulk lemmatizes, vectorizes tokens and adds true chapter boundary list
+    """
+    model_path = fasttext.util.download_model('en', if_exists='ignore')
+    ft_en = fasttext.load_model(model_path)
+
+    model_path = fasttext.util.download_model('de', if_exists='ignore')
+    ft_de = fasttext.load_model(model_path)
+
+    for transcript in transcripts:
+        for token in transcript['tokens']:
+            if transcript['language'] == 'en':
+                token.fasttext = ft_en[token.token]
+            elif transcript['language'] == 'de':
+                token.fasttext = ft_de[token.token]
+
+    return transcripts
+
+def bulk_lemmatize(transcripts):
+    """parses transcripts from json files, bulk lemmatizes, vectorizes tokens and adds true chapter boundary list
+    """
+
+    for transcript in transcripts:
+        transcript['tokens'] = lemmatize_doc(transcript['tokens'], transcript['language'])
+
+    return transcripts
+
+
+def lemmatize_doc(tokens, language):
+    chunk_tokens_lemma = lemma([token.token for token in tokens], language)
+    for i, token in enumerate(tokens):
+        token.token = chunk_tokens_lemma[i]
+    return tokens

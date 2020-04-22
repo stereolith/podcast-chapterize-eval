@@ -1,7 +1,7 @@
 import pytest, sys, inspect
 sys.path.append('./podcast_chapterize')
 
-def test_transcript_parse():
+def test_transcript_fetch():
     from eval_chapterization import get_transcripts
     import importlib  
 
@@ -30,3 +30,17 @@ def test_eval_segmentations():
 
     score = eval_segmentation(sample_segmentation, sample_segmentation_gold, sample_doc_length)
     assert score > 0
+
+
+
+# integration test: evaluation on a subset of available transcripts
+def test_evaluation():
+    from eval_chapterization import run_evaluation, get_transcripts, parameter_matrix
+
+    transcripts = get_transcripts()[0:5]
+
+    param_matrix = parameter_matrix()
+
+    results = run_evaluation(transcripts, param_matrix)
+
+    assert len(results) == len(param_matrix) and len(results[0]) == len(transcripts)
