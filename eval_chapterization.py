@@ -31,7 +31,7 @@ def main():
 
     results_dict = {
         'parameter_matrix': [param.to_dict() for param in param_matrix],
-        'results': eval_score_matrix
+        'results': score_matrix
     }
 
     with open('results.json', 'w') as f:
@@ -46,13 +46,13 @@ def run_evaluation(transcripts, param_matrix):
 
     for i, transcript in enumerate(transcripts):
         # use multiprocesses to distribute over multiple cores
-        pool = Pool(processes=2,maxtasksperchild=10)
+        pool = Pool()
         get_score_for_current_transcript = partial(get_score, transcript=transcript, true_chapter_boundaries=transcript['trueChapterBoundaries'], i_transcript=i, len_transcripts=len(transcripts), len_params=len(param_matrix))
         scores = pool.map(get_score_for_current_transcript, enumerate(param_matrix))
         print(scores)
 
         for j, score in enumerate(scores):
-            eval_score_matrix[j].append(score)
+            eval_score_matrix[j].append(float(score))
 
     return eval_score_matrix
 
@@ -61,10 +61,13 @@ def run_evaluation(transcripts, param_matrix):
 def get_score(params_tuple, transcript, true_chapter_boundaries, i_transcript, len_transcripts, len_params):
     params = params_tuple[1]
     i_params = params_tuple[0]
-    print(f'test transcript {i_transcript}/{len_transcripts} with parameters {i_params}/{len_params}')
     with nostdout():
         boundaries = run_chapterization(transcript, params)
-        score = eval_segmentation(boundaries, true_chapter_boundaries, len(transcript['tokens']))
+        if len(boundaries) < 2:
+            score = 0
+        else:
+            score = eval_segmentation(boundaries, true_chapter_boundaries, len(transcript['tokens']))
+    print(f'tested transcript {i_transcript + 1}/{len_transcripts} with parameters {i_params + 1}/{len_params}\n  found boundaries: {len(boundaries)}, gold boundaries: {len(true_chapter_boundaries)}')
     return score
 
 
@@ -191,7 +194,7 @@ def run_chapterization(transcript, params):
         doc_vectorizer=params.doc_vectorizer
     )
 
-    concat_chapters, boundaries = c.chapterize(
+    boundaries = c.chapterize(
         transcript['tokens'],
         boundaries=[],
         language=transcript['language'],

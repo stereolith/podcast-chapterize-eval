@@ -8,5 +8,5 @@ ADD . .
 RUN pip3 install -r eval-requirements.txt
 
 # beispiel-command:
-RUN ["python3", "-i", "eval_chapterization.py"]
+#ENTRYPOINT ["python3", "-i", "eval_chapterization.py"]
 
