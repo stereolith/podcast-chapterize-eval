@@ -1,6 +1,6 @@
 # script to automatically evaluate different sets of parameters in the chapterization process
 
-import os, sys, json, fasttext, fasttext.util, segeval
+import os, sys, json, segeval
 sys.path.append('./podcast_chapterize')
 
 # context to silence stdout

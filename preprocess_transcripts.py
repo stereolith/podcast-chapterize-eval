@@ -1,3 +1,5 @@
+import fasttext, fasttext.util 
+
 def prepare_transcripts():
     """Main function to preprocess and prepare transcript files for evaluation. Pickles the prepared transcript object.:
         * check language value (ignore transcripts where language value is not set)
