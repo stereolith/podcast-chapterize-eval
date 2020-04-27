@@ -116,16 +116,14 @@ class ChapterizerParameter:
         with_boundaries,
         tfidf_min_df,
         tfidf_max_df,
-        savgol_window_length,
-        savgol_polyorder,
+        savgol_params,
         doc_vectorizer
     ):
         self.window_width = window_width
         self.with_boundaries = with_boundaries
         self.tfidf_min_df = tfidf_min_df
         self.tfidf_max_df = tfidf_max_df
-        self.savgol_window_length = savgol_window_length
-        self.savgol_polyorder = savgol_polyorder
+        self.savgol_params = savgol_params
         self.doc_vectorizer = doc_vectorizer
     
     def to_dict(self):
@@ -134,8 +132,7 @@ class ChapterizerParameter:
             'with_boundaries': self.with_boundaries,
             'tfidf_min_df': self.tfidf_min_df,
             'tfidf_max_df': self.tfidf_max_df,
-            'savgol_window_length': self.savgol_window_length,
-            'savgol_polyorder': self.savgol_polyorder,
+            'savgol_params': self.savgol_params,
             'doc_vectorizer': self.doc_vectorizer
         }
 
@@ -151,9 +148,21 @@ def parameter_matrix():
     window_width = [50, 100, 200, 300]
     with_boundaries = [0]
     tfidf_min_df = [0, 5]
-    tfidf_max_df = [0.7, 0.8, 0.9]
-    savgol_window_length = [0]
-    savgol_polyorder = [4, 5]
+    tfidf_max_df = [0.7, 0.9]
+    savgol_params = [
+        {
+            'savgol_window_length': 5,
+            'savgol_polyorder': 3        
+        },
+        {
+            'savgol_window_length': 7,
+            'savgol_polyorder': 4        
+        },
+        {
+            'savgol_window_length': 9,
+            'savgol_polyorder': 6        
+        },
+    ]
     doc_vectorizer = ['tfidf', 'ft_sif_average', 'ft_average', 'ft_sum']
 
     import itertools
@@ -162,8 +171,7 @@ def parameter_matrix():
         with_boundaries,
         tfidf_min_df,
         tfidf_max_df,
-        savgol_window_length,
-        savgol_polyorder,
+        savgol_params,
         doc_vectorizer
     ]))
 
@@ -189,8 +197,8 @@ def run_chapterization(transcript, params):
         window_width=params.window_width,
         tfidf_min_df=params.tfidf_min_df,
         tfidf_max_df=params.tfidf_max_df,
-        savgol_window_length=params.savgol_window_length,
-        savgol_polyorder=params.savgol_polyorder,
+        savgol_window_length=params.savgol_params['savgol_window_length'],
+        savgol_polyorder=params.savgol_params['savgol_polyorder'],
         doc_vectorizer=params.doc_vectorizer
     )
 

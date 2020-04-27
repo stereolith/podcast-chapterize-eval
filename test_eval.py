@@ -37,7 +37,7 @@ def test_eval_segmentations():
 def test_evaluation():
     from eval_chapterization import run_evaluation, get_transcripts, parameter_matrix
 
-    transcripts = get_transcripts()[0:5]
+    transcripts = get_transcripts()[0:1]
 
     param_matrix = parameter_matrix()
 
