@@ -41,15 +41,16 @@ def main():
 def run_evaluation(transcripts, param_matrix):
     from multiprocessing import Pool
     from functools import partial
+    from contextlib import closing
 
     eval_score_matrix = [[] for i, x in enumerate(param_matrix)] # transcript scores by parameter set
 
     for i, transcript in enumerate(transcripts):
         # use multiprocesses to distribute over multiple cores
-        pool = Pool()
-        get_score_for_current_transcript = partial(get_score, transcript=transcript, true_chapter_boundaries=transcript['trueChapterBoundaries'], i_transcript=i, len_transcripts=len(transcripts), len_params=len(param_matrix))
-        scores = pool.map(get_score_for_current_transcript, enumerate(param_matrix))
-        print(scores)
+        with closing( Pool() ) as pool:
+            get_score_for_current_transcript = partial(get_score, transcript=transcript, true_chapter_boundaries=transcript['trueChapterBoundaries'], i_transcript=i, len_transcripts=len(transcripts), len_params=len(param_matrix))
+            scores = pool.map(get_score_for_current_transcript, enumerate(param_matrix))
+            print(scores)
 
         for j, score in enumerate(scores):
             eval_score_matrix[j].append(float(score))
@@ -63,10 +64,14 @@ def get_score(params_tuple, transcript, true_chapter_boundaries, i_transcript, l
     i_params = params_tuple[0]
     with nostdout():
         boundaries = run_chapterization(transcript, params)
-        if len(boundaries) < 2:
+        if len(boundaries) < 2 or len(true_chapter_boundaries) < 2:
             score = 0
         else:
-            score = eval_segmentation(boundaries, true_chapter_boundaries, len(transcript['tokens']))
+            try:
+                score = eval_segmentation(boundaries, true_chapter_boundaries, len(transcript['tokens']))
+            except:
+                print('evaluation of segmentation failed, setting score to 0')
+                score = 0
     print(f'tested transcript {i_transcript + 1}/{len_transcripts} with parameters {i_params + 1}/{len_params}\n  found boundaries: {len(boundaries)}, gold boundaries: {len(true_chapter_boundaries)}')
     return score
 
