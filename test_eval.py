@@ -31,16 +31,37 @@ def test_eval_segmentations():
     score = eval_segmentation(sample_segmentation, sample_segmentation_gold, sample_doc_length)
     assert score > 0
 
+def test_run_chapterization_bad_parameters():
+    from eval_chapterization import ChapterizerParameter, get_transcripts, run_chapterization
+
+    bad_params = ChapterizerParameter(
+        0,
+        False,
+        None,
+        -122,
+        {
+            'savgol_window_length': -9.5,
+            'savgol_polyorder': 20        
+        },
+        None
+    )
+
+    transcript = get_transcripts()[0]
+
+    chapters = run_chapterization(transcript, bad_params)
+
+    assert chapters == [0]
+
 
 
 # integration test: evaluation on a subset of available transcripts
-def test_evaluation():
-    from eval_chapterization import run_evaluation, get_transcripts, parameter_matrix
+# def test_evaluation():
+#     from eval_chapterization import run_evaluation, get_transcripts, parameter_matrix
 
-    transcripts = get_transcripts()[0:1]
+#     transcripts = get_transcripts()[0:1]
 
-    param_matrix = parameter_matrix()
+#     param_matrix = parameter_matrix()
 
-    results = run_evaluation(transcripts, param_matrix)
+#     results = run_evaluation(transcripts, param_matrix)
 
-    assert len(results) == len(param_matrix) and len(results[0]) == len(transcripts)
+#     assert len(results) == len(param_matrix) and len(results[0]) == len(transcripts)

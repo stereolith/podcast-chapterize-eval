@@ -202,12 +202,16 @@ def run_chapterization(transcript, params):
         doc_vectorizer=params.doc_vectorizer
     )
 
-    boundaries = c.chapterize(
-        transcript['tokens'],
-        boundaries=[],
-        language=transcript['language'],
-        skip_lemmatization=True
-    )
+    try:
+        boundaries = c.chapterize(
+            transcript['tokens'],
+            boundaries=[],
+            language=transcript['language'],
+            skip_lemmatization=True
+        )
+    except:
+        print('chapterize failed')
+        boundaries = [0]
 
     return boundaries
 
@@ -259,4 +263,5 @@ def boundary_string_from_boundary_indices(segmentation, doc_length):
     return segeval.boundary_string_from_masses(tuple(masses))
 
 
-main()
+if __name__ == "__main__":
+    main()
