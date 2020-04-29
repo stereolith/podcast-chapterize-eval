@@ -36,3 +36,15 @@ Using a set of possible values for each parameter from the parameter_matrix()-fu
 These parameter combinations are used to run the chapterize-function to obtain an automatic segmentation for each transcript.
 
 To compare the automatic segmentation and the gold standard, the [segeval](https://segeval.readthedocs.io/en/latest/) package is used. The **boundary edit distance** metric is used to score each automatic segmentation.
+
+## evaluation results
+First results from the evaluation process show that the following parameters work well with the tested data:
+- **window_width** 50
+- **tfidf_min_df** 0
+- **tfidf_max_df** 0.9
+- **savgol_params**:
+    - **savgol_window_length**: 6
+    - **savgol_polyorder** 9
+- **doc_vectorizer** ft_sum
+
+This parameter configuration produced the best mean segeval boundary edit distance scores. Looking at the top 10 scoring parameter configurations, the **ft_sum** and **ft_average** document vectorizers seem to work best. Generally, lower values of **window_width** seem to work well (50 and 100).
