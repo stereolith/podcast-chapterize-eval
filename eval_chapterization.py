@@ -23,6 +23,10 @@ from podcast_chapterize.chapterize.preprocessor_helper import lemma
 
 
 def main():
+    """
+        main evaluation script. Fetches transcripts, creates parameter matrix, runs evaluation on all transcripts/ parameter sets
+        and saves results to json file
+    """    
     transcripts = get_transcripts()
 
     param_matrix = parameter_matrix()
@@ -31,6 +35,7 @@ def main():
 
     results_dict = {
         'parameter_matrix': [param.to_dict() for param in param_matrix],
+        'transcripts': [transcript['filename'] for transcript in transcripts],
         'results': score_matrix
     }
 
@@ -38,6 +43,17 @@ def main():
         json.dump(results_dict, f)
 
 def run_evaluation(transcripts, param_matrix):
+    """
+        runs chapterization process on transcrips with the given parameter sets and evaluates segmentation results compared to
+        the given gold standard segmentations.
+
+    Args:
+        transcripts (list): transcripts with gold standard segmentations to test parameter sets against
+        param_matrix (list of ChapterizerParameter): parameter sets to test
+
+    Returns:
+        [type]: [description]
+    """    
     from multiprocessing import Pool
     from functools import partial
     from contextlib import closing
@@ -59,6 +75,21 @@ def run_evaluation(transcripts, param_matrix):
     
 
 def get_score(params_tuple, transcript, true_chapter_boundaries, i_transcript, len_transcripts, len_params):
+    """
+        Calculate a segmentation score for a given segmentation, compared to the gold standard segmentation.
+        Returns a 0 score and skips segeval calculation if gold standard or tested segmentation has < 2 boundaries.
+
+    Args:
+        params_tuple (tuple): ChapterizerParameter and index of current parameter configuration (handled as tuple to allow execution from pool.map function)
+        transcript (obj): underlying transcript for the segmentation
+        true_chapter_boundaries (list): gold standard segmentation
+        i_transcript (int): index of current transcript
+        len_transcripts (int): total number of transcripts
+        len_params (int): total number of parameter configutations to test (no of rows of parameter matrix)
+
+    Returns:
+        float: segment evaluation score
+    """    
     params = params_tuple[1]
     i_params = params_tuple[0]
     with nostdout():
@@ -98,6 +129,7 @@ def parse_transcripts_json():
     for file in glob.glob("transcripts/*.json"):
         with open(file) as f:           
             transcript = json.load(f)
+            transcript['filename'] = f.name
         try:
             l = transcript['language']
             c = transcript['chapters']
