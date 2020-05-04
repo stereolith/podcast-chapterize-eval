@@ -317,7 +317,7 @@ def results(results_path):
     for res in results['results']:
         mean_scores.append(np.mean(res))
 
-    sorted_sums_i = numpy.argsort(mean_scores)
+    sorted_sums_i = np.argsort(mean_scores)
 
     for i in sorted_sums_i[::-1][:10]:
         print(f'segeval mean score: {mean_scores[i]}')
