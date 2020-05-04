@@ -1,8 +1,8 @@
 # evaluation and tuning script for podcast-chapterize
 
-This script aims to evaluate different combinations of (hyper-)parameters for the chapterization process of the [podcast-chapterize project](https://github.com/stereolith/podcast-chapterize/). The chapterization process automatically segments a transcript (or any long text) into topically cohesive parts. To test the quality of the automatic segmentation, transcripts of podcast episodes that are already published with chapter information included are used as gold standard.
+This script aims to evaluate different combinations of (hyper-)parameters for the chapterization process of the [podcast-chapterize project](https://github.com/stereolith/podcast-chapterize/). The chapterization process automatically segments a transcript (or any long text) into topically cohesive parts. To test the quality of the automatic segmentation, transcripts of podcast episodes that are already published with chapter information included are used as a basis for the segmentation. Segmentation results from the chapterization process are compared against the chapter markers that were published with the corresponding podcast episode.
 
-The text segmentation process is which an adapted version of the TextTiling algorithm which can be tuned by setting different parameters. Different document embedding algorithms were implemented and should be evaluated as well. A collection of podcast episodes which are published with chapter markers are used as the gold standard to test various combinations of parameters of the chapterization process.
+The text segmentation process is an adapted version of the TextTiling algorithm. It can be tuned by setting various parameters. Different document embedding algorithms were implemented and should be evaluated as well. A collection of podcast episodes which are published with chapter markers are used as the gold standard to test various combinations of parameters of the chapterization process.
 
 In the following steps, functions and CLI functionality from the [podcast-chapterize project](https://github.com/stereolith/podcast-chapterize/) are used. Refer to its README for an in-depth documentation. Here, the repo is included as a git submodule.
 
@@ -10,26 +10,30 @@ In the following steps, functions and CLI functionality from the [podcast-chapte
 
 Script: **transcripts/auto_transcript.py**
 
-The list of podcasts used for this evaluation that are published wth chapter information can be found in the 'transcribe/auto_transcript.py' file.
+The list of podcasts that are used for this evaluation can be found in the 'transcribe/auto_transcript.py' file.
 Using the `transcribe` subcommand of the podcast-chapterize CLI, transcripts are made for podcast episodes. Chapter information is extracted with setting the `-c` option. For each episode, the transcript, the chapter information and the language is saved to a json file in the '/transcripts' directory.
+
+Script: **preprocess_transcritps.py**
+The transcripts are preprocessed in this script. To improve performance by reducing redundant tasks, lemmatization and lookup of FastText word vectors is done in bulk before the actual chapterizer process evaluation. The resulting transcripts python list object is saved as a pickle file. The Dockerfile describes a build process for a docker container that includes that preprocessed data to help run it on other machines.
 
 ## evaluation process
 
 Script: **eval_chapterization.py**
 
-Transcripts are fetched from the json files created in the previous step.
+The transcript data is loaded from the pickle file created in the previous step. 
 The following parameters are to be tested and evaluated using the gold standard data:
 
 - **window_width**: Size (number of tokens) of segment in initial segmentation
-- **savgol window_length**: window_length parameter of Savitzky-Golay filter for smoothing
-- **savgol polyorder**: polyorder parameter of Savitzky-Golay filter for smoothing
+- **savgol params**: Parameters for Savitzky-Golay smoothing filter 
+    - **savgol_window_length**: window_length parameter for Savitzky-Golay filter
+    - **savgol polyorder**: polyorder parameter for Savitzky-Golay filter
 
 - one **document embedding algorithm** needs to be chosen from these options:
     - tf-idf weighted term-document matrix
         - includes parameters: **min-df** and **max-df**
-    - FastText word vectors (sum)
-    - FastText word vectors (average)
-    - Average of SIF-weighted FastText word vectors
+    - FastText word vectors, sum (ft_sum)
+    - FastText word vectors, average (ft_average)
+    - Average of SIF-weighted FastText word vectors (ft_sif_average)
 
 Using a set of possible values for each parameter of the ChapterizerParameter class, a list of ChapterizerParameter objects that includes all possible parameter combinations is generated.
 
