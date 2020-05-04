@@ -31,22 +31,22 @@ def main():
 
 
     test_values = {
-        'window_width': [50, 100, 200, 300],
+        'window_width': [50, 100, 150, 200, 250, 300],
         'with_boundaries': [0],
-        'tfidf_min_df': [0, 5],
-        'tfidf_max_df': [0.7, 0.9],
+        'tfidf_min_df': [5],
+        'tfidf_max_df': [0.9],
         'savgol_params': [
             {
-                'savgol_window_length': 5,
-                'savgol_polyorder': 3        
-            },
-            {
                 'savgol_window_length': 7,
-                'savgol_polyorder': 4        
+                'savgol_polyorder': 4
             },
             {
                 'savgol_window_length': 9,
                 'savgol_polyorder': 6        
+            },
+            {
+                'savgol_window_length': 11,
+                'savgol_polyorder': 4
             },
         ],
         'doc_vectorizer': ['tfidf', 'ft_sif_average', 'ft_average', 'ft_sum']
@@ -365,24 +365,21 @@ def plot_results(results_path):
     # plot mean scores for parameter value
     for param in mean_score_by_param_value:
         width = 0.35
-        labels = list(mean_score_by_param_value[param].keys())
-        scores = list(mean_score_by_param_value[param].values())
+        def multiline_json(json_str):
+            return json_str.replace(", ", ",\n")
+        labels = map(multiline_json, list(mean_score_by_param_value[param].keys()))
+        scores = mean_score_by_param_value[param].values()
         fig, ax = plt.subplots()
 
-        ax.bar(labels, scores, width)
+        ax.bar(list(labels), list(scores), width)
 
         ax.set_ylabel('mean score')
+        ax.set_xlabel('parameter value')
         ax.set_title(f'Mean segmentation evaluation scores for parameter {param}')
         ax.legend()
 
         plt.show()
 
-    
 
-    # for param in results['parameter_matrix'][0]:
-    #     for i, param_set in enumerate(results['parameter_matrix']):
-    #         param_value_avgs[param] = 
-
-
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()

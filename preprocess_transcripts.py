@@ -1,5 +1,10 @@
 import fasttext, fasttext.util 
 
+# change sys path to allow realtive imports of podcast-chapterize modules
+import sys
+sys.path.append('./podcast_chapterize')
+from podcast_chapterize.chapterize.preprocessor_helper import lemma
+
 def prepare_transcripts():
     """Main function to preprocess and prepare transcript files for evaluation. Pickles the prepared transcript object.:
         * check language value (ignore transcripts where language value is not set)
@@ -8,6 +13,7 @@ def prepare_transcripts():
         * calculate true chapter boundaries
     """    
     import pickle
+    from eval_chapterization import parse_transcripts_json
 
     transcripts = parse_transcripts_json()
     transcripts = bulk_lemmatize(transcripts)

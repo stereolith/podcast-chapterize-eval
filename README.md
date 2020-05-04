@@ -47,4 +47,11 @@ First results from the evaluation process show that the following parameters wor
     - **savgol_polyorder** 9
 - **doc_vectorizer** ft_sum
 
-This parameter configuration produced the best mean segeval boundary edit distance scores. Looking at the top 10 scoring parameter configurations, the **ft_sum** and **ft_average** document vectorizers seem to work best. Generally, lower values of **window_width** seem to work well (50 and 100).
+The following plots show how the segmentation algorithm performed on average with different values for the __window width__ (window_width), savgol smoothing (savgol_params) and document vectorizer (doc_vectorizer) parameters. The scores of all segmentations that were calculated with the given parameter value were collected and averaged.
+
+![](doc_files/eval_doc_vectorizer.png)
+![](doc_files/eval_savgol_params.png)
+![](doc_files/eval_window_width.png)
+
+Generally, a larger window width seems to work well and document vectorization with averaged or summed up FastText word vectors outperform tfidf document-vector vectorization and sif-weighted FastText document vectors.
+
