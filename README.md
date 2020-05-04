@@ -31,11 +31,11 @@ The following parameters are to be tested and evaluated using the gold standard 
     - FastText word vectors (average)
     - Average of SIF-weighted FastText word vectors
 
-Using a set of possible values for each parameter from the parameter_matrix()-function, a list of dicts that includes all possible parameter combinations is generated.
+Using a set of possible values for each parameter of the ChapterizerParameter class, a list of ChapterizerParameter objects that includes all possible parameter combinations is generated.
 
 These parameter combinations are used to run the chapterize-function to obtain an automatic segmentation for each transcript.
 
-To compare the automatic segmentation and the gold standard, the [segeval](https://segeval.readthedocs.io/en/latest/) package is used. The **boundary edit distance** metric is used to score each automatic segmentation.
+To compare the automatic segmentation and the gold standard, the [segeval](https://segeval.readthedocs.io/en/latest/) package is used. The **boundary similarity** score is calculated using the **boundary edit distance** metric to score segmentations.
 
 ## evaluation results
 First results from the evaluation process show that the following parameters work well with the tested data:

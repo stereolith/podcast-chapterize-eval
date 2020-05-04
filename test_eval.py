@@ -15,7 +15,29 @@ def test_transcript_fetch():
 def test_parameter_matrix():
     from eval_chapterization import parameter_matrix, ChapterizerParameter
 
-    p_matrix = parameter_matrix()
+    test_values = {
+        'window_width': [50, 100, 200, 300],
+        'with_boundaries': [0],
+        'tfidf_min_df': [0, 5],
+        'tfidf_max_df': [0.7, 0.9],
+        'savgol_params': [
+            {
+                'savgol_window_length': 5,
+                'savgol_polyorder': 3        
+            },
+            {
+                'savgol_window_length': 7,
+                'savgol_polyorder': 4        
+            },
+            {
+                'savgol_window_length': 9,
+                'savgol_polyorder': 6        
+            },
+        ],
+        'doc_vectorizer': ['tfidf', 'ft_sif_average', 'ft_average', 'ft_sum']
+    }
+
+    p_matrix = parameter_matrix(test_values)
 
     for parameter_vector in p_matrix:
         assert isinstance(parameter_vector, ChapterizerParameter)
@@ -60,7 +82,28 @@ def test_evaluation():
 
     transcripts = get_transcripts()[0:1]
 
-    param_matrix = parameter_matrix()
+    test_values = {
+        'window_width': [50, 100, 200, 300],
+        'with_boundaries': [0],
+        'tfidf_min_df': [0, 5],
+        'tfidf_max_df': [0.7, 0.9],
+        'savgol_params': [
+            {
+                'savgol_window_length': 5,
+                'savgol_polyorder': 3        
+            },
+            {
+                'savgol_window_length': 7,
+                'savgol_polyorder': 4        
+            },
+            {
+                'savgol_window_length': 9,
+                'savgol_polyorder': 6        
+            },
+        ],
+        'doc_vectorizer': ['tfidf', 'ft_sif_average', 'ft_average', 'ft_sum']
+    }
+    param_matrix = parameter_matrix(test_values)
 
     results = run_evaluation(transcripts, param_matrix)
 
