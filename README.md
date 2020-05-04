@@ -6,14 +6,14 @@ The text segmentation process is an adapted version of the TextTiling algorithm.
 
 In the following steps, functions and CLI functionality from the [podcast-chapterize project](https://github.com/stereolith/podcast-chapterize/) are used. Refer to its README for an in-depth documentation. Here, the repo is included as a git submodule.
 
-## fetching gold standard data
+## fetching and preprocessing gold standard data
 
 Script: **transcripts/auto_transcript.py**
 
 The list of podcasts that are used for this evaluation can be found in the 'transcribe/auto_transcript.py' file.
 Using the `transcribe` subcommand of the podcast-chapterize CLI, transcripts are made for podcast episodes. Chapter information is extracted with setting the `-c` option. For each episode, the transcript, the chapter information and the language is saved to a json file in the '/transcripts' directory.
 
-Script: **preprocess_transcritps.py**
+Script: **preprocess_transcripts.py**
 
 The transcripts are preprocessed in this script. To improve performance by reducing redundant tasks, lemmatization and lookup of FastText word vectors is done in bulk before the actual chapterizer process evaluation. The resulting transcripts python list object is saved as a pickle file. The Dockerfile describes a build process for a docker container that includes that preprocessed data to help run it on other machines.
 
