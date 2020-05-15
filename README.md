@@ -46,8 +46,8 @@ To compare the automatic segmentation and the gold standard, the [segeval](https
 First results from the evaluation process show that the following parameters work well with the tested data:
 - **window_width** 50
 - **savgol_params**:
-    - **savgol_window_length**: 4
-    - **savgol_polyorder** 11
+    - **savgol_window_length**: 11
+    - **savgol_polyorder** 4
 - **doc_vectorizer** ft_sum
 
 The following plots show how the segmentation algorithm performed on average with different values for the __window width__ (window_width), savgol smoothing (savgol_params) and document vectorizer (doc_vectorizer) parameters. The scores of all segmentations that were calculated with the given parameter value were collected and averaged.
