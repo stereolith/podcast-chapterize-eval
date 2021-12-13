@@ -1,5 +1,5 @@
 joblib==0.14.1
-lxml==4.5.0
+lxml==4.6.5
 nltk==3.4.5
 numpy==1.18.1
 pybind11==2.4.3
